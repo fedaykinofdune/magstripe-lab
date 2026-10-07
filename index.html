@@ -1,0 +1,1104 @@
+<meta charset="utf-8">
+<title>Magstripe Lab</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root{
+    --bg:#0e1116; --panel:#161b22; --panel2:#1c232d; --edge:#2b3440;
+    --ink:#e6edf3; --dim:#9aa7b4; --accent:#4cc2ff; --accent2:#ffb454;
+    --good:#3fb950; --bad:#f85149; --warn:#d29922;
+    --mono:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;}
+  header{position:sticky;top:0;z-index:20;background:#0b0e13ee;backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--edge);padding:10px 16px;}
+  header h1{margin:0;font-size:18px;letter-spacing:.5px}
+  header .sub{color:var(--dim);font-size:12px}
+  nav{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+  nav a{font-size:12px;color:var(--dim);text-decoration:none;border:1px solid var(--edge);
+    padding:3px 8px;border-radius:20px;background:var(--panel)}
+  nav a:hover{color:var(--ink);border-color:var(--accent)}
+  main{max-width:1080px;margin:0 auto;padding:16px}
+  section{background:var(--panel);border:1px solid var(--edge);border-radius:12px;
+    padding:16px 18px;margin:16px 0;scroll-margin-top:90px}
+  section h2{margin:.1em 0 .1em;font-size:16px;display:flex;align-items:center;gap:8px}
+  section h2 .tag{font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 6px;border-radius:6px;
+    text-transform:uppercase}
+  .tag.core{background:#1f6feb33;color:#8cc6ff;border:1px solid #1f6feb66}
+  .tag.exp{background:#a371f733;color:#d2b3ff;border:1px solid #a371f766}
+  .hint{color:var(--dim);font-size:12.5px;margin:.2em 0 1em}
+  .row{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .row.top{align-items:flex-start}
+  .col{display:flex;flex-direction:column;gap:6px}
+  .grow{flex:1 1 220px}
+  button{background:var(--accent);color:#02121f;border:0;border-radius:8px;padding:8px 12px;
+    font-weight:600;cursor:pointer;font-size:13.5px}
+  button:hover{filter:brightness(1.08)}
+  button.sec{background:var(--panel2);color:var(--ink);border:1px solid var(--edge)}
+  button.sec:hover{border-color:var(--accent)}
+  button:disabled{opacity:.45;cursor:not-allowed;filter:none}
+  button.danger{background:var(--bad);color:#1a0000}
+  label.fld{font-size:12px;color:var(--dim);display:flex;flex-direction:column;gap:3px}
+  input[type=text],input[type=number],select,textarea{background:#0b0f14;color:var(--ink);
+    border:1px solid var(--edge);border-radius:7px;padding:7px 9px;font-family:var(--mono);font-size:13px}
+  textarea{width:100%;resize:vertical;min-height:56px}
+  input[type=range]{width:170px;accent-color:var(--accent)}
+  canvas{display:block;width:100%;background:#07090d;border:1px solid var(--edge);border-radius:8px}
+  .out{background:#07090d;border:1px solid var(--edge);border-radius:8px;padding:10px;
+    font-family:var(--mono);font-size:12.5px;white-space:pre-wrap;word-break:break-all;overflow:auto;max-height:220px}
+  .out.small{max-height:120px}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:13px}
+  .kv b{color:var(--dim);font-weight:500}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:12px;font-weight:600}
+  .pill.ok{background:#3fb95022;color:var(--good);border:1px solid #3fb95055}
+  .pill.no{background:#f8514922;color:var(--bad);border:1px solid #f8514955}
+  .pill.mid{background:#d2992222;color:var(--warn);border:1px solid #d2992255}
+  .meter{height:12px;background:#07090d;border:1px solid var(--edge);border-radius:6px;overflow:hidden;flex:1}
+  .meter>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#3fb950,#d29922,#f85149)}
+  .muted{color:var(--dim)}
+  .mono{font-family:var(--mono)}
+  .split{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  @media(max-width:720px){.split{grid-template-columns:1fr}}
+  .bitgrid{display:inline-grid;gap:3px;font-family:var(--mono)}
+  .bitcell{width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:5px;
+    cursor:pointer;user-select:none;font-size:13px;border:1px solid var(--edge);background:#0b0f14}
+  .bitcell.on{background:var(--accent);color:#02121f;font-weight:700;border-color:var(--accent)}
+  .bitcell.par{cursor:default;opacity:.9}
+  .rowlbl{font-size:11px;color:var(--dim);display:flex;align-items:center}
+  .keypad{display:grid;grid-template-columns:repeat(3,54px);gap:6px}
+  .keypad button{padding:12px 0;font-size:16px}
+  .note{font-size:11.5px;color:var(--warn)}
+  a.inl{color:var(--accent)}
+  .tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:8px}
+  .tabs button{font-size:12px;padding:5px 10px}
+  .tabs button:not(.active){background:var(--panel2);color:var(--dim);border:1px solid var(--edge)}
+  details{background:#0b0f14;border:1px solid var(--edge);border-radius:8px;padding:8px 10px}
+  summary{cursor:pointer;color:var(--dim);font-size:12.5px}
+</style>
+
+<header>
+  <h1>🧲 Magstripe Lab <span class="sub">— read, decode &amp; play with magnetic-stripe audio, all in the browser</span></h1>
+  <nav>
+    <a href="#capture">Capture</a>
+    <a href="#viz">Audio Visualizer</a>
+    <a href="#decode">Decoded Data</a>
+    <a href="#anatomy">Card Anatomy</a>
+    <a href="#remod">F2F Re-Modulator</a>
+    <a href="#parity">Parity Playground</a>
+    <a href="#barcode">Bits→Barcode</a>
+    <a href="#sonify">Sonify</a>
+    <a href="#dtmf">DTMF Dialer</a>
+    <a href="#afsk">Text Modem</a>
+    <a href="#morse">Morse</a>
+  </nav>
+</header>
+
+<main>
+
+<p class="hint" style="margin-top:4px">
+  Plug the reader into the mic port (you've done this), click <b>Start listening</b>, then swipe a card.
+  No hardware handy right now? Use <b>Generate a test swipe</b> in the Capture panel — it synthesizes a real
+  ISO-format stripe so every tool below works end-to-end. Everything runs locally; nothing leaves this page.
+</p>
+
+<!-- ============================================================ CAPTURE -->
+<section id="capture">
+  <h2><span class="tag core">core</span>1 · Capture the swipe</h2>
+  <p class="hint">Reads raw audio from the selected mic (AGC / noise-suppression disabled for a clean signal),
+     auto-detects a swipe by loudness, and hands the clip to every panel below. You can also drop in a
+     <b>.wav</b> file or synthesize a test card.</p>
+
+  <div class="row">
+    <button id="btnListen">▶ Start listening</button>
+    <button id="btnStop" class="sec" disabled>■ Stop</button>
+    <div class="meter" title="live input level"><i id="level"></i></div>
+    <span id="capState" class="muted">idle</span>
+  </div>
+
+  <div class="row top" style="margin-top:12px">
+    <label class="fld">Swipe trigger level
+      <input type="range" id="armT" min="0.01" max="0.5" step="0.01" value="0.08">
+      <span class="muted mono" id="armTv">0.08</span></label>
+    <label class="fld">Release silence (ms)
+      <input type="range" id="silMs" min="60" max="600" step="20" value="180">
+      <span class="muted mono" id="silMsv">180</span></label>
+    <label class="fld">Manual record (s)
+      <input type="number" id="recSec" value="3" min="1" max="15" style="width:70px"></label>
+    <button id="btnRec" class="sec">⏺ Record now</button>
+  </div>
+
+  <div class="row" style="margin-top:12px">
+    <label class="fld">Load a .wav file
+      <input type="file" id="wavFile" accept="audio/*"></label>
+    <button id="btnSynth" class="sec">✨ Generate a test swipe</button>
+    <label class="fld">Test card track-2 string
+      <input type="text" id="synthStr" value=";6011000990139424=25121011234567890?" style="width:340px"></label>
+  </div>
+  <p class="hint" style="margin-bottom:0">Captured clip: <span id="clipInfo" class="mono muted">none</span></p>
+</section>
+
+<!-- ============================================================ VISUALIZER -->
+<section id="viz">
+  <h2><span class="tag core">core</span>2 · Audio-stream visualization</h2>
+  <p class="hint">The swipe as the mic hears it. Each spike is one magnetic flux reversal.
+     Red ticks = detected transitions; the green/orange band under the wave shows the decoded bit each
+     region became (green&nbsp;0, orange&nbsp;1). Below is the frequency content (FFT) — faster swipes shift it higher.</p>
+  <div class="row" style="margin-bottom:8px">
+    <label class="fld">Peak threshold
+      <input type="range" id="pkThresh" min="0.05" max="0.6" step="0.01" value="0.20">
+      <span class="muted mono" id="pkThreshv">0.20</span></label>
+    <label class="fld">Min peak gap (ms)
+      <input type="range" id="pkGap" min="0.05" max="1.5" step="0.05" value="0.15">
+      <span class="muted mono" id="pkGapv">0.15</span></label>
+    <label class="fld" style="justify-content:flex-end"><span>&nbsp;</span>
+      <button id="btnRedraw" class="sec">↻ Re-detect</button></label>
+    <label class="fld"><input type="checkbox" id="showBits" checked> show bit overlay</label>
+  </div>
+  <canvas id="wave" height="200"></canvas>
+  <canvas id="spec" height="120" style="margin-top:10px"></canvas>
+  <p class="hint" style="margin:6px 0 0">
+    Peaks found: <span id="pkCount" class="mono">0</span> ·
+    Bits recovered: <span id="bitCount" class="mono">0</span></p>
+</section>
+
+<!-- ============================================================ DECODE -->
+<section id="decode">
+  <h2><span class="tag core">core</span>3 · Decoded data — binary · hex · ascii</h2>
+  <p class="hint">Auto-tries Track&nbsp;1 (7-bit) and Track&nbsp;2 (5-bit), forward and reversed swipe direction,
+     and locks onto whichever yields a valid start sentinel + parity. LRC is the card's built-in checksum.</p>
+  <div class="row" style="margin-bottom:10px">
+    <button id="btnDecode">⌗ Decode captured clip</button>
+    <span id="decStatus" class="muted">no clip yet</span>
+  </div>
+  <div class="kv" style="margin-bottom:12px">
+    <b>Track / direction</b><span id="dTrack" class="mono">—</span>
+    <b>Decoded string</b><span id="dStr" class="mono">—</span>
+    <b>Parity</b><span id="dParity">—</span>
+    <b>LRC checksum</b><span id="dLrc">—</span>
+  </div>
+  <div class="split">
+    <div class="col"><span class="muted">Raw bitstream (binary)</span><div id="oBin" class="out"></div></div>
+    <div class="col"><span class="muted">Per-character bits</span><div id="oCharBits" class="out"></div></div>
+    <div class="col"><span class="muted">Hex (ASCII bytes)</span><div id="oHex" class="out small"></div></div>
+    <div class="col"><span class="muted">ASCII</span><div id="oAscii" class="out small"></div></div>
+  </div>
+</section>
+
+<!-- ============================================================ ANATOMY -->
+<section id="anatomy">
+  <h2><span class="tag core">core</span>4 · Card anatomy &amp; Luhn check</h2>
+  <p class="hint">Breaks a Track-2 string into its ISO/IEC 7813 fields and runs the Luhn algorithm — the same
+     checksum every card number carries. Great for showing your wife how "the number" is really several
+     fields glued together. (Runs on whatever you decode, or type one in.)</p>
+  <div class="row" style="margin-bottom:10px">
+    <label class="fld grow">Track-2 string
+      <input type="text" id="anaStr" style="width:100%" placeholder=";PAN=YYMM…?"></label>
+    <button id="btnAna" class="sec">Analyze</button>
+  </div>
+  <div class="kv" id="anaOut">
+    <b>PAN (card number)</b><span id="aPan" class="mono">—</span>
+    <b>Expiration</b><span id="aExp" class="mono">—</span>
+    <b>Service code</b><span id="aSvc" class="mono">—</span>
+    <b>Discretionary</b><span id="aDisc" class="mono">—</span>
+    <b>Luhn valid?</b><span id="aLuhn">—</span>
+    <b>Issuer guess</b><span id="aIssuer" class="mono">—</span>
+  </div>
+  <details style="margin-top:10px"><summary>What do these mean?</summary>
+    <div class="hint" style="margin:8px 0 0">
+      <b>PAN</b> — Primary Account Number. First digit = card network (4 Visa, 5 Mastercard, 6 Discover…).
+      <b>Expiration</b> is stored YYMM. <b>Service code</b> (3 digits) tells terminals things like
+      "chip preferred" or "domestic use only". <b>Discretionary data</b> is issuer-defined (may hold a
+      PIN-verification value on some cards). <b>Luhn</b> catches most single-digit typos.
+    </div>
+  </details>
+</section>
+
+<!-- ============================================================ RE-MODULATOR -->
+<section id="remod">
+  <h2><span class="tag exp">experiment</span>5 · F2F re-modulator (modulate ↔ demodulate)</h2>
+  <p class="hint">The heart of "turn data into sound and back." It re-encodes bits into the exact
+     <b>Aiken bi-phase (F2F)</b> waveform a stripe produces: one flux flip per bit clocks a <b>0</b>;
+     an <b>extra</b> flip in the middle of the bit marks a <b>1</b>. Play it, watch it, then run it back
+     through the decoder to prove the round-trip.</p>
+  <div class="row" style="margin-bottom:8px">
+    <label class="fld grow">Bits (or a track string like <span class="mono">;123=45?</span>)
+      <input type="text" id="modInput" style="width:100%" placeholder="use decoded bits, or type a ;…? string"></label>
+  </div>
+  <div class="row">
+    <label class="fld">Bit rate (Hz)
+      <input type="range" id="modRate" min="400" max="4000" step="50" value="1500">
+      <span class="muted mono" id="modRatev">1500</span></label>
+    <label class="fld"><input type="checkbox" id="modUseDecoded" checked> use last decoded bits</label>
+    <button id="btnModPlay">🔊 Modulate &amp; play</button>
+    <button id="btnModView" class="sec">👁 Load into visualizer</button>
+    <button id="btnModRound" class="sec">↩ Round-trip decode</button>
+  </div>
+  <canvas id="modWave" height="130" style="margin-top:10px"></canvas>
+  <p id="modStatus" class="hint" style="margin:6px 0 0"></p>
+</section>
+
+<!-- ============================================================ PARITY PLAYGROUND -->
+<section id="parity">
+  <h2><span class="tag exp">experiment</span>6 · Parity &amp; LRC playground</h2>
+  <p class="hint">Every 5-bit Track-2 character carries an <b>odd-parity</b> bit, and the whole track ends with an
+     <b>LRC</b> column check. Click any data bit to flip it and watch parity turn red and the ASCII change —
+     a hands-on demo of how cards detect read errors. The rightmost column (P) is the parity bit.</p>
+  <div class="row" style="margin-bottom:10px">
+    <button id="btnParLoad" class="sec">Load decoded Track-2</button>
+    <span id="parStatus" class="muted">nothing loaded</span>
+  </div>
+  <div style="overflow:auto"><div id="parGrid"></div></div>
+</section>
+
+<!-- ============================================================ BARCODE -->
+<section id="barcode">
+  <h2><span class="tag exp">experiment</span>7 · Bits → barcode</h2>
+  <p class="hint">"See" the stripe: the top strip paints each bit as a black (1) or white (0) column; the bottom
+     strip draws the actual F2F flux-transition pattern — the physical striping on the magnetic tape.
+     Download it as a PNG.</p>
+  <div class="row" style="margin-bottom:8px">
+    <button id="btnBarLoad" class="sec">Render decoded bits</button>
+    <button id="btnBarSave" class="sec">⬇ Save PNG</button>
+  </div>
+  <canvas id="barCanvas" height="150"></canvas>
+</section>
+
+<!-- ============================================================ SONIFY -->
+<section id="sonify">
+  <h2><span class="tag exp">experiment</span>8 · Sonify the stripe</h2>
+  <p class="hint">Play the data as music: each bit (or each character) becomes a note, low for 0 and high for 1.
+     Kids love hearing the "song" of a card. Adjust tempo and scale.</p>
+  <div class="row">
+    <label class="fld">Tempo (notes/s)
+      <input type="range" id="sonTempo" min="2" max="30" step="1" value="10">
+      <span class="muted mono" id="sonTempov">10</span></label>
+    <label class="fld">Mode
+      <select id="sonMode"><option value="bit">one note per bit</option>
+        <option value="char">one note per character (pitch = value)</option></select></label>
+    <button id="btnSonPlay">🎵 Play</button>
+    <button id="btnSonStop" class="sec">■ Stop</button>
+  </div>
+  <p id="sonStatus" class="hint" style="margin:6px 0 0"></p>
+</section>
+
+<!-- ============================================================ DTMF -->
+<section id="dtmf">
+  <h2><span class="tag exp">experiment</span>9 · DTMF dialer</h2>
+  <p class="hint">Turn the card's digits into old-school telephone touch-tones (DTMF). Play the whole number,
+     or poke the keypad. It even listens back to its own tones and prints what it "hears" via Goertzel
+     detection — a mini demo of how phones decode key presses.</p>
+  <div class="row" style="margin-bottom:10px">
+    <button id="btnDtmfPan">☎ Dial the decoded PAN</button>
+    <span id="dtmfHeard" class="mono muted">heard: —</span>
+  </div>
+  <div class="keypad" id="dtmfPad"></div>
+</section>
+
+<!-- ============================================================ AFSK MODEM -->
+<section id="afsk">
+  <h2><span class="tag exp">experiment</span>10 · Text modem (AFSK)</h2>
+  <p class="hint">A general "reimagine any data as sound" toy — a tiny audio modem. It encodes text as two tones
+     (mark/space FSK), like a fax or dial-up handshake. Modulate to hear it, then demodulate the same clip
+     back to text. Feed it your card number, a secret message, anything.</p>
+  <div class="row top">
+    <label class="fld grow">Message
+      <textarea id="afskText">HELLO WIFE — this is what a modem sounds like</textarea></label>
+  </div>
+  <div class="row">
+    <label class="fld">Baud
+      <input type="range" id="afskBaud" min="100" max="1200" step="50" value="300">
+      <span class="muted mono" id="afskBaudv">300</span></label>
+    <button id="btnAfskMod">🔊 Modulate &amp; play</button>
+    <button id="btnAfskDemod" class="sec">↩ Demodulate back</button>
+  </div>
+  <div class="col" style="margin-top:10px"><span class="muted">Recovered text</span>
+    <div id="afskOut" class="out small"></div></div>
+</section>
+
+<!-- ============================================================ MORSE -->
+<section id="morse">
+  <h2><span class="tag exp">experiment</span>11 · Morse code <span class="muted" style="font-weight:400;font-size:12px">(bonus)</span></h2>
+  <p class="hint">The oldest data-over-sound trick. Convert any decoded text (or your own) to Morse and beep it out.</p>
+  <div class="row">
+    <label class="fld grow">Text
+      <input type="text" id="morseText" style="width:100%" value="CARD"></label>
+    <label class="fld">WPM
+      <input type="range" id="morseWpm" min="5" max="30" step="1" value="15">
+      <span class="muted mono" id="morseWpmv">15</span></label>
+    <button id="btnMorse">📻 Play Morse</button>
+  </div>
+  <p id="morseOut" class="mono muted" style="margin:8px 0 0"></p>
+</section>
+
+<p class="hint" style="text-align:center;margin:30px 0 10px">
+  Built for tinkering with your own cards. Magstripe formats: ISO/IEC 7811 / 7813 · Aiken bi-phase (F2F) encoding.
+</p>
+</main>
+
+<script>
+"use strict";
+/* ============================================================================
+   Magstripe Lab — everything below runs locally in the browser.
+   Sections: capture → peak detect → F2F decode → parse → play toys.
+   ============================================================================ */
+
+const $ = id => document.getElementById(id);
+let ac = null;                         // shared AudioContext
+function audio(){ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+  if(ac.state==="suspended") ac.resume(); return ac; }
+
+/* ---- shared captured clip + last decode ---------------------------------- */
+let clip = null;          // {samples:Float32Array, rate:Number}
+let lastDecode = null;    // decode result object
+let lastPeaks = [];       // sample indices of detected transitions
+let lastBits = [];        // recovered bit array
+let lastBitBounds = [];   // sample index where each bit starts (for overlay)
+
+/* small slider→label wiring */
+[["armT","armTv"],["silMs","silMsv"],["pkThresh","pkThreshv"],["pkGap","pkGapv"],
+ ["modRate","modRatev"],["sonTempo","sonTempov"],["afskBaud","afskBaudv"],
+ ["morseWpm","morseWpmv"]].forEach(([s,l])=>{
+  const el=$(s); const set=()=> $(l).textContent = el.value; el.addEventListener("input",set); set();
+});
+
+/* ============================================================================
+   1 · CAPTURE
+   ============================================================================ */
+let mediaStream=null, procNode=null, srcNode=null, analyser=null;
+let listening=false, recBuf=[], recState="idle", silenceRun=0, preRoll=[];
+let rafLevel=null;
+
+async function startListening(){
+  try{
+    mediaStream = await navigator.mediaDevices.getUserMedia({audio:{
+      echoCancellation:false, noiseSuppression:false, autoGainControl:false, channelCount:1}});
+  }catch(e){
+    $("capState").innerHTML='<span class="pill no">mic blocked</span>';
+    alert("Couldn't open the microphone.\n\n"+e.message+
+      "\n\nIf you opened this file directly (file://) and the mic is blocked, run the included serve.sh "+
+      "and open http://localhost:8000 instead — browsers only grant mic access on localhost/https.");
+    return;
+  }
+  const a=audio();
+  srcNode=a.createMediaStreamSource(mediaStream);
+  analyser=a.createAnalyser(); analyser.fftSize=1024;
+  procNode=a.createScriptProcessor(4096,1,1);
+  srcNode.connect(analyser); srcNode.connect(procNode);
+  procNode.connect(a.destination);   // needed for the node to run; gain is ~0 anyway
+  procNode.onaudioprocess = onAudio;
+  listening=true; recState="idle"; recBuf=[]; preRoll=[];
+  $("btnListen").disabled=true; $("btnStop").disabled=false;
+  $("capState").innerHTML='<span class="pill ok">listening — swipe a card</span>';
+  meterLoop();
+}
+function stopListening(){
+  listening=false;
+  if(procNode){procNode.disconnect(); procNode.onaudioprocess=null;}
+  if(srcNode) srcNode.disconnect();
+  if(mediaStream) mediaStream.getTracks().forEach(t=>t.stop());
+  if(rafLevel) cancelAnimationFrame(rafLevel);
+  $("level").style.width="0%";
+  $("btnListen").disabled=false; $("btnStop").disabled=true;
+  $("capState").textContent="idle";
+}
+function onAudio(ev){
+  const inp=ev.inputBuffer.getChannelData(0);
+  const arm=parseFloat($("armT").value);
+  const rate=ev.inputBuffer.sampleRate;
+  let peak=0; for(let i=0;i<inp.length;i++){const v=Math.abs(inp[i]); if(v>peak)peak=v;}
+
+  if(recState==="idle"){
+    // keep a short pre-roll so we don't clip the swipe's start
+    preRoll.push(inp.slice()); if(preRoll.length>3) preRoll.shift();
+    if(peak>arm){
+      recState="rec"; recBuf=preRoll.slice(); silenceRun=0;
+      $("capState").innerHTML='<span class="pill mid">capturing swipe…</span>';
+    }
+  }else if(recState==="rec"){
+    recBuf.push(inp.slice());
+    const relSamples = parseFloat($("silMs").value)/1000*rate;
+    if(peak<arm*0.5){ silenceRun+=inp.length; } else { silenceRun=0; }
+    if(silenceRun>relSamples){
+      recState="idle";
+      const total=recBuf.reduce((n,b)=>n+b.length,0);
+      const out=new Float32Array(total); let o=0;
+      for(const b of recBuf){out.set(b,o);o+=b.length;}
+      recBuf=[];
+      if(total>rate*0.05){ setClip(out,rate,"live swipe"); autoDecode(); }
+      $("capState").innerHTML='<span class="pill ok">listening — swipe a card</span>';
+    }
+  }
+}
+function meterLoop(){
+  if(!listening) return;
+  const buf=new Uint8Array(analyser.fftSize); analyser.getByteTimeDomainData(buf);
+  let peak=0; for(let i=0;i<buf.length;i++){const v=Math.abs(buf[i]-128)/128; if(v>peak)peak=v;}
+  $("level").style.width=Math.min(100,peak*140)+"%";
+  rafLevel=requestAnimationFrame(meterLoop);
+}
+async function recordFixed(){
+  if(!listening){ await startListening(); if(!listening) return; }
+  const secs=Math.max(1,Math.min(15,parseFloat($("recSec").value)||3));
+  const rate=ac.sampleRate; const grab=[];
+  const oldHandler=procNode.onaudioprocess;
+  $("capState").innerHTML='<span class="pill mid">recording '+secs+'s…</span>';
+  procNode.onaudioprocess=ev=>{ grab.push(ev.inputBuffer.getChannelData(0).slice()); };
+  setTimeout(()=>{
+    procNode.onaudioprocess=oldHandler;
+    const total=grab.reduce((n,b)=>n+b.length,0), out=new Float32Array(total); let o=0;
+    for(const b of grab){out.set(b,o);o+=b.length;}
+    setClip(out,rate,secs+"s recording"); autoDecode();
+    $("capState").innerHTML='<span class="pill ok">listening — swipe a card</span>';
+  },secs*1000);
+}
+function setClip(samples,rate,label){
+  clip={samples,rate};
+  $("clipInfo").textContent=`${label} · ${(samples.length/rate).toFixed(2)}s · ${rate} Hz · ${samples.length} samples`;
+  drawAll();
+}
+
+/* --- WAV file loading ------------------------------------------------------ */
+$("wavFile").addEventListener("change",async e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const buf=await f.arrayBuffer();
+  const a=audio();
+  a.decodeAudioData(buf.slice(0), ab=>{
+    setClip(ab.getChannelData(0), ab.sampleRate, "file: "+f.name); autoDecode();
+  }, err=>alert("Could not decode audio file: "+err));
+});
+
+$("btnListen").onclick=startListening;
+$("btnStop").onclick=stopListening;
+$("btnRec").onclick=recordFixed;
+$("btnSynth").onclick=()=>{
+  const s=$("synthStr").value.trim();
+  const bits=track2StringToBits(s);
+  const rate=48000, rateHz=parseFloat($("modRate").value)||1500;
+  const wav=f2fSynth(bits,rate,rateHz,true);
+  setClip(wav,rate,"synth: "+s); autoDecode();
+};
+
+/* ============================================================================
+   PEAK DETECTION  →  INTERVALS  →  F2F BITS
+   ============================================================================ */
+function findPeaks(sig,rate,threshFrac,minGapMs){
+  let maxA=1e-9; for(let i=0;i<sig.length;i++){const v=Math.abs(sig[i]); if(v>maxA)maxA=v;}
+  const th=maxA*threshFrac, minGap=Math.max(1,Math.round(minGapMs/1000*rate));
+  const peaks=[]; let last=-1e9;
+  for(let i=1;i<sig.length-1;i++){
+    const a=Math.abs(sig[i]);
+    if(a>=th && a>=Math.abs(sig[i-1]) && a>Math.abs(sig[i+1])){
+      if(i-last>=minGap){ peaks.push(i); last=i; }
+      else if(peaks.length && a>Math.abs(sig[peaks[peaks.length-1]])){
+        peaks[peaks.length-1]=i; last=i;         // keep the stronger of two close peaks
+      }
+    }
+  }
+  return peaks;
+}
+// classic adaptive F2F (Aiken bi-phase) interval decoder
+function bitsFromPeaks(peaks){
+  if(peaks.length<4) return {bits:[],bounds:[]};
+  const iv=[]; for(let i=1;i<peaks.length;i++) iv.push(peaks[i]-peaks[i-1]);
+  // seed reference from the median of the first few gaps (card preamble = zeros)
+  const seed=[...iv.slice(0,Math.min(6,iv.length))].sort((a,b)=>a-b);
+  let ref=seed[Math.floor(seed.length/2)]||iv[0];
+  const bits=[], bounds=[]; let i=0;
+  while(i<iv.length){
+    const d=iv[i];
+    if(d > ref*0.68){ bits.push(0); bounds.push(peaks[i]); ref=d; i++; }
+    else{
+      if(i+1>=iv.length){ break; }
+      bits.push(1); bounds.push(peaks[i]); ref=(d+iv[i+1]); i+=2;   // two halves = one 1
+    }
+  }
+  return {bits,bounds};
+}
+
+/* ============================================================================
+   F2F DECODER  (tracks 1 & 2, forward + reversed)
+   ============================================================================ */
+function readChar(bits,start,n){
+  let val=0,ones=0;
+  for(let i=0;i<n-1;i++){ if(bits[start+i]){ val|=(1<<i); ones++; } }  // LSB first, 4/6 data bits
+  const parity=bits[start+n-1];
+  const parityOk=((ones+parity)&1)===1;                                // odd parity
+  return {val,parity,parityOk,ones};
+}
+// higher = better decode. Length dominates so a spurious short ";?" never beats
+// a real full-length track; cleanliness (parity/LRC) breaks ties.
+function scoreDecode(r){
+  if(!r||!r.ok) return -1;
+  return r.chars.length*10 - r.parErr*3 + (r.lrcOk?6:0) + (r.parErr===0?4:0);
+}
+function tryTrack(bits,n,off,startCh,endCh){
+  const limit=bits.length-n; let best=null;
+  for(let s=0;s<=limit;s++){
+    const c=readChar(bits,s,n);
+    if(!(c.parityOk && (c.val+off)===startCh.charCodeAt(0))) continue;
+    // found a start sentinel — read forward to the end sentinel
+    const chars=[], raw=[]; let pos=s, parErr=0, ended=false;
+    while(pos+n<=bits.length){
+      const cc=readChar(bits,pos,n);
+      const ch=String.fromCharCode(cc.val+off);
+      chars.push(ch); raw.push({bits:bits.slice(pos,pos+n),val:cc.val,parityOk:cc.parityOk});
+      if(!cc.parityOk) parErr++;
+      pos+=n;
+      if(ch===endCh){ ended=true; break; }
+    }
+    if(!ended) continue;
+    // LRC = next character; verify column XOR over all data bits
+    let lrcPresent=false, lrcOk=null;
+    if(pos+n<=bits.length){
+      lrcPresent=true;
+      const lrcBits=bits.slice(pos,pos+n);
+      const cols=n-1; let xor=new Array(cols).fill(0);
+      for(const r of raw) for(let k=0;k<cols;k++) xor[k]^=r.bits[k];
+      lrcOk=true; for(let k=0;k<cols;k++) if(xor[k]!==lrcBits[k]) lrcOk=false;
+    }
+    const cand={ok:true, startBit:s, chars, string:chars.join(""), parErr,
+                lrcOk, lrcPresent, n, off, raw};
+    // keep the best candidate across every start position (rejects noise-forged ";?")
+    if(!best || scoreDecode(cand)>scoreDecode(best)) best=cand;
+  }
+  return best||{ok:false};
+}
+function decodeBits(bits){
+  const rev=[...bits].reverse();
+  const cands=[
+    ["Track 2","forward",tryTrack(bits,5,0x30,";","?")],
+    ["Track 2","reversed",tryTrack(rev,5,0x30,";","?")],
+    ["Track 1","forward",tryTrack(bits,7,0x20,"%","?")],
+    ["Track 1","reversed",tryTrack(rev,7,0x20,"%","?")],
+  ];
+  // prefer the longest, cleanest decode across both tracks and swipe directions
+  let best=null;
+  for(const [trk,dir,r] of cands){
+    if(!r.ok) continue;
+    r.track=trk; r.dir=dir; r.usedBits = dir==="reversed"?rev:bits; r._score=scoreDecode(r);
+    if(!best || r._score>best._score) best=r;
+  }
+  return best;
+}
+
+/* ============================================================================
+   Orchestration: detect + decode the current clip, update every panel
+   ============================================================================ */
+function detectFor(threshFrac,minGapMs){
+  const pk=findPeaks(clip.samples,clip.rate,threshFrac,minGapMs);
+  const {bits,bounds}=bitsFromPeaks(pk);
+  return {pk,bits,bounds};
+}
+function autoDecode(){
+  if(!clip) return;
+  // sweep detector settings; keep the globally highest-scoring decode (not just
+  // the first parity-clean one — noise can forge a short but "clean" ;? sentinel pair)
+  const threshes=[0.2,0.15,0.25,0.3,0.12,0.4,0.5], gaps=[0.15,0.1,0.3,0.05,0.5,0.8];
+  let chosen=null, chosenScore=-1, chosenParams=null;
+  for(const t of threshes) for(const g of gaps){
+    const d=detectFor(t,g);
+    const dec=decodeBits(d.bits);
+    const sc = dec? scoreDecode(dec) : -1;
+    if(sc>chosenScore){ chosen={...d,dec}; chosenScore=sc; chosenParams=[t,g]; }
+  }
+  if(!chosen || !chosen.dec){ // nothing decoded — show current-slider detection
+    const d=detectFor(parseFloat($("pkThresh").value),parseFloat($("pkGap").value));
+    chosen={...d,dec:decodeBits(d.bits)};
+  }else if(chosenParams){
+    $("pkThresh").value=chosenParams[0]; $("pkThreshv").textContent=chosenParams[0];
+    $("pkGap").value=chosenParams[1]; $("pkGapv").textContent=chosenParams[1];
+  }
+  lastPeaks=chosen.pk; lastBits=chosen.bits; lastBitBounds=chosen.bounds; lastDecode=chosen.dec;
+  renderDecode(); drawAll();
+}
+function reDetect(){
+  if(!clip) return;
+  const d=detectFor(parseFloat($("pkThresh").value),parseFloat($("pkGap").value));
+  lastPeaks=d.pk; lastBits=d.bits; lastBitBounds=d.bounds; lastDecode=decodeBits(d.bits);
+  renderDecode(); drawAll();
+}
+$("btnRedraw").onclick=reDetect;
+$("btnDecode").onclick=()=>{ if(clip) autoDecode(); else $("decStatus").textContent="capture or synth a clip first"; };
+
+/* ============================================================================
+   3 · RENDER DECODED DATA
+   ============================================================================ */
+function bitsToStr(a){ return a.join(""); }
+function renderDecode(){
+  $("pkCount").textContent=lastPeaks.length;
+  $("bitCount").textContent=lastBits.length;
+  $("oBin").textContent = lastBits.length? bitsToStr(lastBits) : "(no bits)";
+  const d=lastDecode;
+  if(!d || !d.ok){
+    $("decStatus").innerHTML='<span class="pill no">no valid track found</span> — try Re-detect, adjust thresholds, or swipe again';
+    $("dTrack").textContent="—"; $("dStr").textContent="—";
+    $("dParity").textContent="—"; $("dLrc").textContent="—";
+    $("oCharBits").textContent=""; $("oHex").textContent=""; $("oAscii").textContent="";
+    return;
+  }
+  $("decStatus").innerHTML='<span class="pill ok">decoded</span>';
+  $("dTrack").textContent=`${d.track} · ${d.dir} · ${d.n}-bit chars`;
+  $("dStr").textContent=d.string;
+  $("dParity").innerHTML = d.parErr===0
+     ? '<span class="pill ok">all parity OK</span>'
+     : `<span class="pill no">${d.parErr} parity error(s)</span>`;
+  $("dLrc").innerHTML = d.lrcPresent
+     ? (d.lrcOk?'<span class="pill ok">LRC valid</span>':'<span class="pill mid">LRC mismatch</span>')
+     : '<span class="pill mid">no LRC</span>';
+  // per-character bits
+  $("oCharBits").textContent = d.chars.map((ch,i)=>{
+    const r=d.raw[i]; return `${JSON.stringify(ch)}  ${r.bits.join("")}  ${r.parityOk?"":"✗par"}`;
+  }).join("\n");
+  // hex + ascii of the decoded characters
+  const bytes=[...d.string].map(c=>c.charCodeAt(0));
+  $("oHex").textContent = bytes.map(b=>b.toString(16).padStart(2,"0")).join(" ");
+  $("oAscii").textContent = d.string;
+  // feed downstream panels
+  if(d.track==="Track 2") $("anaStr").value=d.string;
+  $("morseText").value=d.string.replace(/[;?%]/g,"");
+}
+
+/* ============================================================================
+   VISUALIZERS
+   ============================================================================ */
+function drawAll(){ drawWave(); drawSpec(); }
+function drawWave(){
+  const cv=$("wave"), g=cv.getContext("2d");
+  const W=cv.width=cv.clientWidth*devicePixelRatio, H=cv.height=200*devicePixelRatio;
+  g.fillStyle="#07090d"; g.fillRect(0,0,W,H);
+  if(!clip){ g.fillStyle="#5a6673"; g.font=14*devicePixelRatio+"px sans-serif";
+    g.fillText("no clip — capture, load, or generate a swipe",12,H/2); return; }
+  const s=clip.samples, n=s.length, mid=H/2;
+  // bit overlay band
+  if($("showBits").checked && lastBitBounds.length && lastBits.length){
+    for(let i=0;i<lastBitBounds.length;i++){
+      const x0=lastBitBounds[i]/n*W, x1=(i+1<lastBitBounds.length?lastBitBounds[i+1]:n)/n*W;
+      g.fillStyle = lastBits[i]? "rgba(255,180,84,.16)":"rgba(63,185,80,.14)";
+      g.fillRect(x0,H-20*devicePixelRatio,x1-x0,20*devicePixelRatio);
+    }
+  }
+  // waveform (min/max per column)
+  g.strokeStyle="#4cc2ff"; g.lineWidth=1*devicePixelRatio; g.beginPath();
+  const step=Math.max(1,Math.floor(n/W));
+  for(let x=0;x<W;x++){
+    let mn=1,mx=-1; const i0=Math.floor(x/W*n);
+    for(let k=0;k<step;k++){const v=s[i0+k]||0; if(v<mn)mn=v; if(v>mx)mx=v;}
+    g.moveTo(x,mid-mx*mid*0.9); g.lineTo(x,mid-mn*mid*0.9);
+  }
+  g.stroke();
+  // peak ticks
+  g.strokeStyle="#f85149"; g.lineWidth=1*devicePixelRatio; g.beginPath();
+  for(const p of lastPeaks){ const x=p/n*W; g.moveTo(x,0); g.lineTo(x,10*devicePixelRatio);
+    g.moveTo(x,H-30*devicePixelRatio); g.lineTo(x,H-20*devicePixelRatio); }
+  g.stroke();
+}
+function drawSpec(){
+  const cv=$("spec"), g=cv.getContext("2d");
+  const W=cv.width=cv.clientWidth*devicePixelRatio, H=cv.height=120*devicePixelRatio;
+  g.fillStyle="#07090d"; g.fillRect(0,0,W,H);
+  if(!clip) return;
+  // short-time magnitude spectrogram using a small DFT (magnitude only, low res = fine here)
+  const s=clip.samples, N=256, hop=Math.max(64,Math.floor(s.length/W*2));
+  const cols=Math.floor((s.length-N)/hop);
+  const half=N/2;
+  const cosT=[],sinT=[];
+  for(let k=0;k<half;k++){cosT[k]=[];sinT[k]=[];for(let t=0;t<N;t++){
+    cosT[k][t]=Math.cos(2*Math.PI*k*t/N); sinT[k][t]=Math.sin(2*Math.PI*k*t/N);}}
+  for(let c=0;c<cols;c++){
+    const off=c*hop; const x=Math.floor(c/cols*W);
+    for(let k=0;k<half;k++){
+      let re=0,im=0; for(let t=0;t<N;t++){const v=s[off+t]*(0.5-0.5*Math.cos(2*Math.PI*t/N));
+        re+=v*cosT[k][t]; im-=v*sinT[k][t];}
+      const mag=Math.sqrt(re*re+im*im);
+      const y=H-(k/half)*H;
+      const inten=Math.min(1,mag*0.6);
+      g.fillStyle=`rgb(${Math.floor(inten*80)},${Math.floor(inten*200)},${Math.floor(120+inten*135)})`;
+      g.globalAlpha=inten; g.fillRect(x,y,Math.ceil(W/cols)+1,H/half+1);
+    }
+  }
+  g.globalAlpha=1; g.fillStyle="#5a6673"; g.font=11*devicePixelRatio+"px sans-serif";
+  g.fillText("frequency ↑   ·   time →",8,14*devicePixelRatio);
+}
+[$("pkThresh"),$("pkGap")].forEach(el=>el.addEventListener("change",reDetect));
+$("showBits").addEventListener("change",drawWave);
+window.addEventListener("resize",()=>{ if(clip) drawAll(); });
+
+/* ============================================================================
+   F2F SYNTH — bits → audio (used by test-swipe & re-modulator)
+   ============================================================================ */
+function f2fSynth(bits,rate,bitRateHz,addPreamble){
+  const spb=Math.max(4,Math.round(rate/bitRateHz));   // samples per bit
+  let stream=[];
+  if(addPreamble){ for(let i=0;i<24;i++) stream.push(0); }  // leading zeros = clock
+  stream=stream.concat(bits);
+  if(addPreamble){ for(let i=0;i<12;i++) stream.push(0); }  // trailing zeros
+  // build transition sample-positions: a flip every bit boundary, +mid-bit for a 1.
+  // start after a one-bit margin so the first pulse isn't clipped at sample 0.
+  const trans=[]; let pos=spb;
+  for(const b of stream){ trans.push(pos); if(b) trans.push(pos+spb/2); pos+=spb; }
+  const total=pos+spb;
+  const out=new Float32Array(total);
+  const lobe=Math.max(2,Math.floor(spb/3));           // shaped bipolar pulse width
+  trans.forEach((t,idx)=>{
+    const sign=(idx%2===0)?1:-1, center=Math.round(t);
+    for(let k=-lobe;k<=lobe;k++){
+      const i=center+k; if(i<0||i>=total) continue;
+      out[i]+=sign*Math.cos(Math.PI*k/(2*lobe))*0.8;  // half-cosine bump
+    }
+  });
+  return out;
+}
+function track2StringToBits(str){
+  // encode a ;...? string to 5-bit LSB-first + odd parity chars
+  const bits=[];
+  for(const ch of str){
+    const val=(ch.charCodeAt(0)-0x30)&0x0f; let ones=0;
+    for(let i=0;i<4;i++){const b=(val>>i)&1; bits.push(b); ones+=b;}
+    bits.push((ones&1)===1?0:1);   // odd parity
+  }
+  return bits;
+}
+
+/* ============================================================================
+   playback helper
+   ============================================================================ */
+function playSamples(f32,rate){
+  const a=audio();
+  const b=a.createBuffer(1,f32.length,rate);
+  b.copyToChannel(f32.slice(),0);
+  const src=a.createBufferSource(); src.buffer=b; src.connect(a.destination); src.start();
+  return src;
+}
+
+/* ============================================================================
+   4 · CARD ANATOMY + LUHN
+   ============================================================================ */
+function luhn(num){
+  let sum=0,alt=false;
+  for(let i=num.length-1;i>=0;i--){
+    let d=+num[i]; if(isNaN(d)) return false;
+    if(alt){ d*=2; if(d>9)d-=9; } sum+=d; alt=!alt;
+  }
+  return sum%10===0;
+}
+function issuerOf(pan){
+  if(/^4/.test(pan)) return "Visa";
+  if(/^5[1-5]/.test(pan)) return "Mastercard";
+  if(/^3[47]/.test(pan)) return "American Express";
+  if(/^6(011|5|4[4-9])/.test(pan)) return "Discover";
+  if(/^35/.test(pan)) return "JCB";
+  if(/^(36|38|30[0-5])/.test(pan)) return "Diners Club";
+  return "unknown / non-payment card";
+}
+function analyze(str){
+  const m=str.match(/;?([0-9]+)=([0-9]{0,4})([0-9]{0,3})([0-9]*)\??/);
+  if(!m){ ["aPan","aExp","aSvc","aDisc","aIssuer"].forEach(id=>$(id).textContent="—");
+    $("aLuhn").innerHTML='<span class="pill mid">not a Track-2 number</span>'; return; }
+  const pan=m[1], exp=m[2], svc=m[3], disc=m[4]||"";
+  $("aPan").textContent=pan;
+  $("aExp").textContent = exp.length>=4? `20${exp.slice(0,2)}-${exp.slice(2,4)} (YYMM ${exp})` : (exp||"—");
+  $("aSvc").textContent = svc||"—";
+  $("aDisc").textContent = disc||"—";
+  $("aIssuer").textContent = issuerOf(pan);
+  const ok=luhn(pan);
+  $("aLuhn").innerHTML = ok? '<span class="pill ok">valid ✓</span>'
+                           : '<span class="pill no">fails Luhn ✗</span>';
+}
+$("btnAna").onclick=()=>analyze($("anaStr").value.trim());
+
+/* ============================================================================
+   5 · F2F RE-MODULATOR
+   ============================================================================ */
+function currentModBits(){
+  if($("modUseDecoded").checked && lastDecode && lastDecode.ok){
+    // reconstruct clean bits from decoded chars for a tidy waveform
+    if(lastDecode.track==="Track 2") return track2StringToBits(lastDecode.string);
+    return lastDecode.usedBits.slice();
+  }
+  const v=$("modInput").value.trim();
+  if(/^[01]+$/.test(v)) return v.split("").map(Number);
+  if(v) return track2StringToBits(v);       // treat as a track string
+  return lastBits.slice();
+}
+function modSynth(){
+  const bits=currentModBits();
+  const rate=48000, hz=parseFloat($("modRate").value);
+  return {wav:f2fSynth(bits,rate,hz,true), rate, bits};
+}
+$("btnModPlay").onclick=()=>{
+  const {wav,rate,bits}=modSynth(); playSamples(wav,rate);
+  $("modStatus").textContent=`Modulated ${bits.length} bits @ ${$("modRate").value} Hz → ${(wav.length/rate).toFixed(2)}s of audio, playing.`;
+  drawMini($("modWave"),wav);
+};
+$("btnModView").onclick=()=>{
+  const {wav,rate}=modSynth(); setClip(wav,rate,"re-modulated"); reDetect();
+  location.hash="#viz";
+};
+$("btnModRound").onclick=()=>{
+  const {wav,rate,bits}=modSynth();
+  const pk=findPeaks(wav,rate,0.2,0.05);
+  const {bits:rb}=bitsFromPeaks(pk);
+  const dec=decodeBits(rb);
+  drawMini($("modWave"),wav);
+  if(dec&&dec.ok){
+    $("modStatus").innerHTML=`Round-trip ✓ — encoded ${bits.length} bits, decoded back: <span class="mono">${dec.string}</span> `+
+      (dec.parErr===0?'<span class="pill ok">clean</span>':`<span class="pill no">${dec.parErr} parity err</span>`);
+  }else{
+    $("modStatus").innerHTML='<span class="pill no">round-trip failed to decode</span> (try a different bit rate)';
+  }
+};
+function drawMini(cv,wav){
+  const g=cv.getContext("2d");
+  const W=cv.width=cv.clientWidth*devicePixelRatio, H=cv.height=130*devicePixelRatio;
+  g.fillStyle="#07090d"; g.fillRect(0,0,W,H);
+  g.strokeStyle="#ffb454"; g.lineWidth=1*devicePixelRatio; g.beginPath();
+  const n=wav.length,mid=H/2;
+  for(let x=0;x<W;x++){let mn=1,mx=-1;const i0=Math.floor(x/W*n),step=Math.max(1,Math.floor(n/W));
+    for(let k=0;k<step;k++){const v=wav[i0+k]||0;if(v<mn)mn=v;if(v>mx)mx=v;}
+    g.moveTo(x,mid-mx*mid*0.8);g.lineTo(x,mid-mn*mid*0.8);} g.stroke();
+}
+
+/* ============================================================================
+   6 · PARITY / LRC PLAYGROUND
+   ============================================================================ */
+let parRows=[];   // each row = array of 4 editable data bits
+function loadParity(){
+  if(!(lastDecode&&lastDecode.ok&&lastDecode.track==="Track 2")){
+    $("parStatus").innerHTML='<span class="pill mid">decode a Track-2 card first</span>'; return; }
+  parRows=lastDecode.raw.map(r=>r.bits.slice(0,4));   // just the 4 data bits
+  $("parStatus").textContent="click any bit to flip it";
+  renderParity();
+}
+function renderParity(){
+  const host=$("parGrid"); host.innerHTML="";
+  const grid=document.createElement("div"); grid.className="bitgrid";
+  grid.style.gridTemplateColumns=`70px repeat(4,26px) 34px 40px 34px`;
+  const head=["char","b0","b1","b2","b3","P","ASCII","par"];
+  head.forEach(h=>{const d=document.createElement("div");d.className="rowlbl";d.textContent=h;grid.appendChild(d);});
+  let colXor=[0,0,0,0];
+  parRows.forEach((row,ri)=>{
+    let ones=0; row.forEach(b=>ones+=b);
+    const par=(ones&1)===1?0:1;                 // odd parity bit
+    const val=row[0]|row[1]<<1|row[2]<<2|row[3]<<3;
+    const ch=String.fromCharCode(val+0x30);
+    for(let k=0;k<4;k++) colXor[k]^=row[k];
+    const lbl=document.createElement("div"); lbl.className="rowlbl mono"; lbl.textContent=`#${ri}`;
+    grid.appendChild(lbl);
+    row.forEach((b,ci)=>{
+      const c=document.createElement("div"); c.className="bitcell"+(b?" on":"");
+      c.textContent=b; c.onclick=()=>{parRows[ri][ci]^=1; renderParity();};
+      grid.appendChild(c);
+    });
+    const pc=document.createElement("div"); pc.className="bitcell par"+(par?" on":""); pc.textContent=par;
+    grid.appendChild(pc);
+    const ac=document.createElement("div"); ac.className="rowlbl mono"; ac.style.fontWeight="700";
+    ac.textContent=JSON.stringify(ch); grid.appendChild(ac);
+    const ok=document.createElement("div"); ok.className="rowlbl";
+    ok.innerHTML = '<span class="pill ok" style="padding:0 5px">ok</span>';   // parity is recomputed so always ok per row
+    grid.appendChild(ok);
+  });
+  host.appendChild(grid);
+  const lrc=document.createElement("p"); lrc.className="hint"; lrc.style.margin="10px 0 0";
+  lrc.innerHTML=`Live LRC (column XOR of data bits): <span class="mono">${colXor.join("")}</span> — `+
+    `this is the checksum character the card stores after the end sentinel. Flip bits above and watch it change.`;
+  host.appendChild(lrc);
+}
+$("btnParLoad").onclick=loadParity;
+
+/* ============================================================================
+   7 · BITS → BARCODE
+   ============================================================================ */
+function renderBarcode(){
+  const cv=$("barCanvas"), g=cv.getContext("2d");
+  const bits = (lastDecode&&lastDecode.ok)
+      ? (lastDecode.track==="Track 2"? track2StringToBits(lastDecode.string): lastDecode.usedBits)
+      : lastBits;
+  const W=cv.width=cv.clientWidth*devicePixelRatio, H=cv.height=150*devicePixelRatio;
+  g.fillStyle="#fff"; g.fillRect(0,0,W,H);
+  if(!bits.length){ g.fillStyle="#888"; g.font=14*devicePixelRatio+"px sans-serif";
+    g.fillText("decode a card first",12,H/2); return; }
+  const bw=W/bits.length;
+  // top strip: bit value bars
+  g.fillStyle="#000";
+  bits.forEach((b,i)=>{ if(b) g.fillRect(i*bw,10,Math.max(1,bw*0.9),H*0.42-10); });
+  // bottom strip: F2F flux transitions (the physical stripe pattern)
+  let level=1, x=0; const seg=W/bits.length;
+  g.fillStyle="#000";
+  bits.forEach(b=>{
+    // a 0 = one region; a 1 = two half regions (flip mid-way)
+    const y=H*0.5, h=H*0.45;
+    if(b){ if(level>0)g.fillRect(x,y,seg/2,h); level=-level;
+           if(level>0)g.fillRect(x+seg/2,y,seg/2,h); level=-level; }
+    else { if(level>0)g.fillRect(x,y,seg,h); level=-level; }
+    x+=seg;
+  });
+  g.fillStyle="#000"; g.font=11*devicePixelRatio+"px sans-serif";
+  g.fillText("bit values",6,H*0.42+6); g.fillText("flux transitions (tape)",6,H-6);
+}
+$("btnBarLoad").onclick=renderBarcode;
+$("btnBarSave").onclick=()=>{
+  const a=document.createElement("a"); a.download="magstripe-barcode.png";
+  a.href=$("barCanvas").toDataURL(); a.click();
+};
+
+/* ============================================================================
+   8 · SONIFY
+   ============================================================================ */
+let sonNodes=[];
+function stopSon(){ sonNodes.forEach(n=>{try{n.stop()}catch(e){}}); sonNodes=[]; }
+$("btnSonStop").onclick=stopSon;
+$("btnSonPlay").onclick=()=>{
+  stopSon();
+  const a=audio(); const mode=$("sonMode").value;
+  const tempo=parseFloat($("sonTempo").value); const dt=1/tempo;
+  let seq=[];
+  if(mode==="bit"){
+    const bits=(lastDecode&&lastDecode.ok)?track2StringToBits(lastDecode.string):lastBits;
+    if(!bits.length){ $("sonStatus").textContent="decode or capture something first"; return; }
+    const scale=[261.63,329.63]; seq=bits.map(b=>scale[b]);
+  }else{
+    const s=(lastDecode&&lastDecode.ok)?lastDecode.string:"";
+    if(!s){ $("sonStatus").textContent="decode a card first"; return; }
+    const pent=[261.63,293.66,329.63,392,440,523.25,587.33,659.25];
+    seq=[...s].map(c=>pent[(c.charCodeAt(0))%pent.length]*(1+((c.charCodeAt(0)>>3)%2)));
+  }
+  let t=a.currentTime+0.05;
+  seq.forEach(f=>{
+    const o=a.createOscillator(),g=a.createGain();
+    o.type="triangle"; o.frequency.value=f;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.25,t+0.01);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+dt*0.9);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t+dt); sonNodes.push(o); t+=dt;
+  });
+  $("sonStatus").textContent=`Playing ${seq.length} notes (${mode}).`;
+};
+
+/* ============================================================================
+   9 · DTMF
+   ============================================================================ */
+const DTMF={row:[697,770,852,941],col:[1209,1336,1477,1633],
+  map:{'1':[0,0],'2':[0,1],'3':[0,2],'A':[0,3],'4':[1,0],'5':[1,1],'6':[1,2],'B':[1,3],
+       '7':[2,0],'8':[2,1],'9':[2,2],'C':[2,3],'*':[3,0],'0':[3,1],'#':[3,2],'D':[3,3]}};
+function dtmfTone(key,dur){   // returns Float32 for one key
+  const rate=44100, n=Math.floor(rate*dur), out=new Float32Array(n);
+  const [r,c]=DTMF.map[key]; const f1=DTMF.row[r], f2=DTMF.col[c];
+  for(let i=0;i<n;i++){ const w=Math.min(1,Math.min(i,n-i)/(rate*0.005));
+    out[i]=w*0.4*(Math.sin(2*Math.PI*f1*i/rate)+Math.sin(2*Math.PI*f2*i/rate)); }
+  return {out,rate,f1,f2};
+}
+function goertzel(sig,start,N,f,rate){
+  const k=2*Math.cos(2*Math.PI*f/rate); let s1=0,s2=0;
+  for(let i=0;i<N;i++){const s0=sig[start+i]+k*s1-s2; s2=s1; s1=s0;}
+  return s1*s1+s2*s2-k*s1*s2;
+}
+function dtmfDetect(sig,rate){
+  const N=Math.min(sig.length,Math.floor(rate*0.04));
+  let bestR=0,br=-1,bestC=0,bc=-1;
+  DTMF.row.forEach((f,i)=>{const m=goertzel(sig,0,N,f,rate); if(m>bestR){bestR=m;br=i;}});
+  DTMF.col.forEach((f,i)=>{const m=goertzel(sig,0,N,f,rate); if(m>bestC){bestC=m;bc=i;}});
+  for(const k in DTMF.map){const[r,c]=DTMF.map[k]; if(r===br&&c===bc) return k;}
+  return "?";
+}
+function playDtmfSeq(keys){
+  const a=audio(); let t=a.currentTime+0.05; const dur=0.18, gap=0.06;
+  let heard=[];
+  [...keys].forEach(k=>{
+    if(!(k in DTMF.map)) return;
+    const {out,rate}=dtmfTone(k,dur);
+    playAt(out,rate,t);
+    heard.push(dtmfDetect(out,rate));   // decode our own tone
+    t+=dur+gap;
+  });
+  $("dtmfHeard").textContent="heard: "+heard.join(" ");
+}
+function playAt(f32,rate,when){
+  const a=audio(); const b=a.createBuffer(1,f32.length,rate); b.copyToChannel(f32.slice(),0);
+  const s=a.createBufferSource(); s.buffer=b; s.connect(a.destination); s.start(when);
+}
+$("btnDtmfPan").onclick=()=>{
+  const pan=(lastDecode&&lastDecode.ok)? (lastDecode.string.match(/[0-9]+/)||[""])[0] : "";
+  if(!pan){ $("dtmfHeard").textContent="heard: — (decode a card first)"; return; }
+  playDtmfSeq(pan);
+};
+(function buildPad(){
+  const keys=["1","2","3","4","5","6","7","8","9","*","0","#"];
+  const pad=$("dtmfPad");
+  keys.forEach(k=>{const b=document.createElement("button"); b.className="sec"; b.textContent=k;
+    b.onclick=()=>playDtmfSeq(k); pad.appendChild(b);});
+})();
+
+/* ============================================================================
+   10 · AFSK TEXT MODEM
+   ============================================================================ */
+const AFSK={mark:1200,space:2200};
+function afskModulate(text,baud){
+  const rate=44100, spb=Math.floor(rate/baud);
+  // frame each byte: start bit(0/space) + 8 data LSB-first + stop bit(1/mark)
+  const bits=[]; for(let i=0;i<16;i++)bits.push(1);            // preamble of marks
+  for(const ch of text){ const v=ch.charCodeAt(0)&0xff;
+    bits.push(0); for(let i=0;i<8;i++)bits.push((v>>i)&1); bits.push(1); }
+  for(let i=0;i<8;i++)bits.push(1);
+  const out=new Float32Array(bits.length*spb); let ph=0;
+  bits.forEach((b,bi)=>{ const f=b?AFSK.mark:AFSK.space;
+    for(let i=0;i<spb;i++){ ph+=2*Math.PI*f/rate; out[bi*spb+i]=0.4*Math.sin(ph); } });
+  return {out,rate,spb};
+}
+function afskDemodulate(sig,rate,baud){
+  const spb=Math.floor(rate/baud); const bits=[];
+  for(let p=0;p+spb<=sig.length;p+=spb){
+    const m=goertzel(sig,p,spb,AFSK.mark,rate), s=goertzel(sig,p,spb,AFSK.space,rate);
+    bits.push(m>=s?1:0);
+  }
+  // find frames: look for start bit 0 after marks, read 8 data + stop
+  let out=""; let i=0;
+  // skip preamble marks
+  while(i<bits.length && bits[i]===1) i++;
+  while(i+10<=bits.length){
+    if(bits[i]!==0){ i++; continue; }              // need a start bit
+    let v=0; for(let k=0;k<8;k++) v|=bits[i+1+k]<<k;
+    const stop=bits[i+9];
+    if(stop===1 && v>=9 && v<127){ out+=String.fromCharCode(v); i+=10; }
+    else i++;
+  }
+  return out;
+}
+let afskClip=null;
+$("btnAfskMod").onclick=()=>{
+  const {out,rate}=afskModulate($("afskText").value,parseFloat($("afskBaud").value));
+  afskClip={out,rate}; playSamples(out,rate);
+  $("afskOut").textContent="(modulated & playing — click Demodulate to decode it back)";
+};
+$("btnAfskDemod").onclick=()=>{
+  if(!afskClip){ $("afskOut").textContent="modulate something first"; return; }
+  const txt=afskDemodulate(afskClip.out,afskClip.rate,parseFloat($("afskBaud").value));
+  $("afskOut").textContent=txt||"(nothing recovered — try matching the baud)";
+};
+
+/* ============================================================================
+   11 · MORSE
+   ============================================================================ */
+const MORSE={A:".-",B:"-...",C:"-.-.",D:"-..",E:".",F:"..-.",G:"--.",H:"....",I:"..",J:".---",
+K:"-.-",L:".-..",M:"--",N:"-.",O:"---",P:".--.",Q:"--.-",R:".-.",S:"...",T:"-",U:"..-",V:"...-",
+W:".--",X:"-..-",Y:"-.--",Z:"--..","0":"-----","1":".----","2":"..---","3":"...--","4":"....-",
+"5":".....","6":"-....","7":"--...","8":"---..","9":"----.",".":".-.-.-",",":"--..--","?":"..--.."};
+$("btnMorse").onclick=()=>{
+  const text=$("morseText").value.toUpperCase();
+  const wpm=parseFloat($("morseWpm").value); const unit=1.2/wpm;   // seconds per dit
+  const a=audio(); let t=a.currentTime+0.05; let shown="";
+  const beep=(len)=>{ const o=a.createOscillator(),g=a.createGain(); o.frequency.value=650;
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(0.3,t+0.005);
+    g.gain.setValueAtTime(0.3,t+len-0.005); g.gain.exponentialRampToValueAtTime(0.0001,t+len);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t+len); t+=len; };
+  for(const ch of text){
+    if(ch===" "){ t+=unit*7; shown+="  "; continue; }
+    const code=MORSE[ch]; if(!code){ continue; } shown+=code+" ";
+    for(const sym of code){ beep(sym==="."?unit:unit*3); t+=unit; }
+    t+=unit*2;
+  }
+  $("morseOut").textContent=shown.trim();
+};
+
+/* initial paint */
+drawAll();
+</script>
